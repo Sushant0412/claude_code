@@ -2,7 +2,7 @@
 
 import { Message } from "ai";
 import { cn } from "@/lib/utils";
-import { User, Bot, Loader2 } from "lucide-react";
+import { User, Bot, Loader2, Sparkles } from "lucide-react";
 import { MarkdownRenderer } from "./MarkdownRenderer";
 import { ToolInvocation } from "./ToolInvocation";
 
@@ -11,120 +11,196 @@ interface MessageListProps {
   isLoading?: boolean;
 }
 
+/** Typing indicator — three animated dots */
+function TypingIndicator() {
+  return (
+    <div className="flex items-center gap-1.5 px-1 py-0.5">
+      {[0, 1, 2].map((i) => (
+        <span
+          key={i}
+          className="block w-1.5 h-1.5 rounded-full bg-muted-foreground/50 animate-bounce"
+          style={{ animationDelay: `${i * 0.15}s`, animationDuration: "0.9s" }}
+        />
+      ))}
+    </div>
+  );
+}
+
 export function MessageList({ messages, isLoading }: MessageListProps) {
+  /* ── Empty state ───────────────────────────────────────────── */
   if (messages.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-full px-4 text-center">
-        <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-blue-50 mb-4 shadow-sm">
-          <Bot className="h-7 w-7 text-blue-600" />
+      <div className="flex flex-col items-center justify-center h-full px-6 text-center">
+        {/* Icon orb */}
+        <div className="relative mb-6">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 via-primary/10 to-transparent border border-primary/20 shadow-lg flex items-center justify-center backdrop-blur-sm">
+            <Bot className="h-7 w-7 text-primary" />
+          </div>
+          {/* Subtle glow ring */}
+          <div className="absolute -inset-1 rounded-3xl bg-primary/10 blur-md -z-10" />
         </div>
-        <p className="text-neutral-900 font-semibold text-lg mb-2">Start a conversation to generate React components</p>
-        <p className="text-neutral-500 text-sm max-w-sm">I can help you create buttons, forms, cards, and more</p>
+
+        <p className="text-foreground font-semibold text-lg mb-2 tracking-tight">
+          Generate React components with AI
+        </p>
+        <p className="text-muted-foreground text-sm max-w-xs leading-relaxed">
+          Describe what you want — buttons, forms, cards, layouts — and I'll
+          build it instantly.
+        </p>
+
+        {/* Dummy image */}
+        <div className="mt-6 mb-4 overflow-hidden rounded-xl border border-border/50 shadow-sm max-w-[240px]">
+          <img 
+            src="https://picsum.photos/seed/chat/400/200" 
+            alt="Dummy placeholder" 
+            className="w-full h-auto object-cover opacity-80 hover:opacity-100 transition-opacity"
+          />
+        </div>
+
+        {/* Hint chips */}
+        <div className="flex flex-wrap justify-center gap-2 mt-4 max-w-xs">
+          {["A login form", "A pricing card", "A nav bar"].map((hint) => (
+            <span
+              key={hint}
+              className="text-xs px-3 py-1.5 rounded-full bg-secondary text-secondary-foreground border border-border/60 font-medium"
+            >
+              {hint}
+            </span>
+          ))}
+        </div>
       </div>
     );
   }
 
+  /* ── Message list ──────────────────────────────────────────── */
   return (
-    <div className="flex flex-col h-full overflow-y-auto px-4 py-6">
-      <div className="space-y-6 max-w-4xl mx-auto w-full">
-        {messages.map((message) => (
-          <div
-            key={message.id || message.content}
-            className={cn(
-              "flex gap-4",
-              message.role === "user" ? "justify-end" : "justify-start"
-            )}
-          >
-            {message.role === "assistant" && (
-              <div className="flex-shrink-0">
-                <div className="w-9 h-9 rounded-lg bg-white border border-neutral-200 shadow-sm flex items-center justify-center">
-                  <Bot className="h-4.5 w-4.5 text-neutral-700" />
+    <div className="flex flex-col h-full overflow-y-auto px-4 py-5 scroll-smooth">
+      <div className="flex flex-col gap-5 max-w-3xl mx-auto w-full">
+        {messages.map((message, msgIndex) => {
+          const isUser = message.role === "user";
+          const isLastAssistant =
+            !isUser && msgIndex === messages.length - 1;
+
+          return (
+            <div
+              key={message.id || message.content}
+              className={cn(
+                "flex gap-3 items-end",
+                isUser ? "justify-end" : "justify-start"
+              )}
+            >
+              {/* ── Assistant avatar ── */}
+              {!isUser && (
+                <div className="flex-shrink-0 mb-0.5">
+                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20 shadow-sm flex items-center justify-center">
+                    <Sparkles className="h-3.5 w-3.5 text-primary" />
+                  </div>
                 </div>
-              </div>
-            )}
-            
-            <div className={cn(
-              "flex flex-col gap-2 max-w-[85%]",
-              message.role === "user" ? "items-end" : "items-start"
-            )}>
-              <div className={cn(
-                "rounded-xl px-4 py-3",
-                message.role === "user" 
-                  ? "bg-blue-600 text-white shadow-sm" 
-                  : "bg-white text-neutral-900 border border-neutral-200 shadow-sm"
-              )}>
-                <div className="text-sm">
+              )}
+
+              {/* ── Bubble ── */}
+              <div
+                className={cn(
+                  "flex flex-col gap-1.5 max-w-[80%]",
+                  isUser ? "items-end" : "items-start"
+                )}
+              >
+                <div
+                  className={cn(
+                    "rounded-2xl px-4 py-3 text-sm shadow-sm",
+                    isUser
+                      ? /* user */ [
+                          "bg-primary text-primary-foreground",
+                          "rounded-br-sm",
+                          "shadow-primary/20 shadow-md",
+                        ]
+                      : /* assistant */ [
+                          "glass",
+                          "text-foreground",
+                          "rounded-bl-sm",
+                          "dark:shadow-none",
+                        ]
+                  )}
+                >
+                  {/* Text/Content Part */}
                   {message.parts ? (
-                    <>
-                      {message.parts.map((part, partIndex) => {
-                        switch (part.type) {
-                          case "text":
-                            return message.role === "user" ? (
-                              <span key={partIndex} className="whitespace-pre-wrap">{part.text}</span>
-                            ) : (
-                              <MarkdownRenderer
-                                key={partIndex}
-                                content={part.text}
-                                className="prose-sm"
-                              />
-                            );
-                          case "reasoning":
-                            return (
-                              <div key={partIndex} className="mt-3 p-3 bg-white/50 rounded-md border border-neutral-200">
-                                <span className="text-xs font-medium text-neutral-600 block mb-1">Reasoning</span>
-                                <span className="text-sm text-neutral-700">{part.reasoning}</span>
-                              </div>
-                            );
-                          case "tool-invocation":
-                            return <ToolInvocation key={partIndex} tool={part.toolInvocation} />;
-                          case "source":
-                            return (
-                              <div key={partIndex} className="mt-2 text-xs text-neutral-500">
-                                Source: {JSON.stringify(part.source)}
-                              </div>
-                            );
-                          case "step-start":
-                            return partIndex > 0 ? <hr key={partIndex} className="my-3 border-neutral-200" /> : null;
-                          default:
-                            return null;
-                        }
-                      })}
-                      {isLoading &&
-                        message.role === "assistant" &&
-                        messages.indexOf(message) === messages.length - 1 && (
-                          <div className="flex items-center gap-2 mt-3 text-neutral-500">
-                            <Loader2 className="h-3 w-3 animate-spin" />
-                            <span className="text-sm">Generating...</span>
+                    message.parts.map((part, partIndex) => {
+                      if (part.type === "text") {
+                        return isUser ? (
+                          <span key={partIndex} className="whitespace-pre-wrap">
+                            {part.text}
+                          </span>
+                        ) : (
+                          <MarkdownRenderer
+                            key={partIndex}
+                            content={part.text}
+                            className="prose-sm"
+                          />
+                        );
+                      }
+                      if (part.type === "reasoning") {
+                        return (
+                          <div
+                            key={partIndex}
+                            className="mt-3 px-3 py-2.5 rounded-xl bg-muted/60 border border-border/60 backdrop-blur-sm"
+                          >
+                            <span className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground block mb-1.5">
+                              Reasoning
+                            </span>
+                            <span className="text-sm text-muted-foreground leading-relaxed">
+                              {part.reasoning}
+                            </span>
                           </div>
-                        )}
-                    </>
+                        );
+                      }
+                      return null;
+                    })
                   ) : message.content ? (
-                    message.role === "user" ? (
-                      <span className="whitespace-pre-wrap">{message.content}</span>
+                    isUser ? (
+                      <span className="whitespace-pre-wrap">
+                        {message.content}
+                      </span>
                     ) : (
-                      <MarkdownRenderer content={message.content} className="prose-sm" />
+                      <MarkdownRenderer
+                        content={message.content}
+                        className="prose-sm"
+                      />
                     )
-                  ) : isLoading &&
-                    message.role === "assistant" &&
-                    messages.indexOf(message) === messages.length - 1 ? (
-                    <div className="flex items-center gap-2 text-neutral-500">
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                      <span className="text-sm">Generating...</span>
-                    </div>
                   ) : null}
+
+                  {/* Typing indicator while streaming */}
+                  {isLoading && isLastAssistant && <TypingIndicator />}
                 </div>
+
+                {/* Tool Invocations (Outside the bubble) */}
+                {message.parts?.map((part, partIndex) => 
+                  part.type === "tool-invocation" ? (
+                    <ToolInvocation
+                      key={partIndex}
+                      tool={part.toolInvocation}
+                    />
+                  ) : null
+                )}
+
+                {/* Timestamp-style spacer role label (subtle) */}
+                {isUser && (
+                  <span className="text-[10px] text-muted-foreground/50 px-1 select-none">
+                    You
+                  </span>
+                )}
               </div>
+
+              {/* ── User avatar ── */}
+              {isUser && (
+                <div className="flex-shrink-0 mb-0.5">
+                  <div className="w-8 h-8 rounded-xl bg-primary shadow-md shadow-primary/30 flex items-center justify-center">
+                    <User className="h-3.5 w-3.5 text-primary-foreground" />
+                  </div>
+                </div>
+              )}
             </div>
-            
-            {message.role === "user" && (
-              <div className="flex-shrink-0">
-                <div className="w-9 h-9 rounded-lg bg-blue-600 shadow-sm flex items-center justify-center">
-                  <User className="h-4.5 w-4.5 text-white" />
-                </div>
-              </div>
-            )}
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

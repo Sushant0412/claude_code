@@ -35,7 +35,7 @@ export async function POST(req: Request) {
     model,
     messages,
     maxTokens: 10_000,
-    maxSteps: isMockProvider ? 4 : 40,
+    maxSteps: 1,
     onError: (err: any) => {
       console.error(err);
     },

@@ -16,10 +16,12 @@ test("MessageList shows empty state when no messages", () => {
   render(<MessageList messages={[]} />);
 
   expect(
-    screen.getByText("Start a conversation to generate React components")
+    screen.getByText("Generate React components with AI")
   ).toBeDefined();
   expect(
-    screen.getByText("I can help you create buttons, forms, cards, and more")
+    screen.getByText(
+      "Describe what you want — buttons, forms, cards, layouts — and I'll build it instantly."
+    )
   ).toBeDefined();
 });
 
@@ -106,9 +108,13 @@ test("MessageList shows loading state for last assistant message without content
     },
   ];
 
-  render(<MessageList messages={messages} isLoading={true} />);
+  const { container } = render(
+    <MessageList messages={messages} isLoading={true} />
+  );
 
-  expect(screen.getByText("Generating...")).toBeDefined();
+  // Loading is now a 3-dot bounce animation
+  const dots = container.querySelectorAll(".animate-bounce");
+  expect(dots.length).toBeGreaterThanOrEqual(1);
 });
 
 test("MessageList doesn't show loading state for non-last messages", () => {
@@ -182,8 +188,8 @@ test("MessageList renders multiple messages in correct order", () => {
 
   const { container } = render(<MessageList messages={messages} />);
 
-  // Get all message containers in order
-  const messageContainers = container.querySelectorAll(".rounded-xl");
+  // Get all message containers in order (bubbles now use rounded-2xl)
+  const messageContainers = container.querySelectorAll(".rounded-2xl");
 
   // Verify we have 4 messages
   expect(messageContainers).toHaveLength(4);
@@ -218,7 +224,7 @@ test("MessageList handles step-start parts", () => {
   expect(screen.getByText("Step 1 content")).toBeDefined();
   expect(screen.getByText("Step 2 content")).toBeDefined();
   // Check that a separator exists (hr element)
-  const container = screen.getByText("Step 1 content").closest(".rounded-xl");
+  const container = screen.getByText("Step 1 content").closest(".rounded-2xl");
   expect(container?.querySelector("hr")).toBeDefined();
 });
 
@@ -238,18 +244,18 @@ test("MessageList applies correct styling for user vs assistant messages", () =>
 
   render(<MessageList messages={messages} />);
 
-  const userMessage = screen.getByText("User message").closest(".rounded-xl");
+  const userMessage = screen.getByText("User message").closest(".rounded-2xl");
   const assistantMessage = screen
     .getByText("Assistant message")
-    .closest(".rounded-xl");
+    .closest(".rounded-2xl");
 
-  // User messages should have blue background
-  expect(userMessage?.className).toContain("bg-blue-600");
-  expect(userMessage?.className).toContain("text-white");
+  // User messages use the primary design token
+  expect(userMessage?.className).toContain("bg-primary");
+  expect(userMessage?.className).toContain("text-primary-foreground");
 
-  // Assistant messages should have white background
-  expect(assistantMessage?.className).toContain("bg-white");
-  expect(assistantMessage?.className).toContain("text-neutral-900");
+  // Assistant messages use the glassmorphism utility
+  expect(assistantMessage?.className).toContain("glass");
+  expect(assistantMessage?.className).toContain("text-foreground");
 });
 
 test("MessageList handles empty content with parts", () => {
@@ -281,10 +287,7 @@ test("MessageList shows loading for assistant message with empty parts", () => {
     <MessageList messages={messages} isLoading={true} />
   );
 
-  // Check that exactly one "Generating..." text appears
-  const loadingText = container.querySelectorAll(".text-neutral-500");
-  const generatingElements = Array.from(loadingText).filter(
-    (el) => el.textContent === "Generating..."
-  );
-  expect(generatingElements).toHaveLength(1);
+  // Loading indicator is now a 3-dot bounce animation
+  const dots = container.querySelectorAll(".animate-bounce");
+  expect(dots.length).toBe(3);
 });
